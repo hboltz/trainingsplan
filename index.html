@@ -32,7 +32,7 @@ h1{font-size:22px;margin:4px 0 2px}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
 .steps button{font:600 20px inherit;font-family:inherit;padding:14px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text)}
 .ok{width:100%;font:700 20px inherit;font-family:inherit;padding:18px;border:0;border-radius:14px;background:var(--ok);color:#fff;margin-top:6px}
-.hist{margin-top:18px;color:var(--muted);font-size:14px}
+.hist{margin-top:18px;color:var(--muted);font-size:14px}.set input{width:100%;font:inherit;font-size:20px;background:transparent;color:var(--text);border:0;border-bottom:1px dashed var(--line);padding:2px 0;outline:none;border-radius:0}
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 18px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}.card b{display:block;font-size:24px}.card span{color:var(--muted);font-size:12px}h2{font-size:17px;margin:20px 0 8px}.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}.row .top{display:flex;justify-content:space-between;gap:8px}.row .top span{color:var(--muted)}.dates{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
 </style>
 </head>
@@ -71,7 +71,7 @@ function home(){
 function detail(id){
  cur=id;var g=GERAETE.filter(function(x){return x.id===id})[0],hist=(S.hist[id]||[]).slice(-5).reverse();
  var h='<button class="back" id="back">‹ Übersicht</button><p class="name">'+g.id+'</p>'
- +'<div class="set"><small>Einstellung</small>'+esc(g.set)+'</div>'
+ +'<div class="set"><small>Einstellung (antippen zum Ändern)</small><input id="es" type="text" value="'+esc(getSet(g)).replace(/"/g,"&quot;")+'"></div>'
  +'<div class="wrap"><input id="w" type="number" inputmode="decimal" step="any" value="'+S.w[id]+'"><div class="kg">kg</div></div>'
  +'<div class="steps"><button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="1">+1</button><button data-d="5">+5</button></div>'
  +'<button class="ok" id="ok">Bestätigen</button>';
@@ -79,6 +79,7 @@ function detail(id){
  document.getElementById("app").innerHTML=h;window.scrollTo(0,0);
  var inp=document.getElementById("w");
  document.querySelectorAll(".steps button").forEach(function(b){b.onclick=function(){var v=parseFloat(String(inp.value).replace(",","."))||0;inp.value=Math.max(0,Math.round((v+Number(b.dataset.d))*10)/10)}});
+ document.getElementById("es").oninput=function(){S.set=S.set||{};S.set[id]=this.value;save()};
  document.getElementById("back").onclick=home;
  document.getElementById("ok").onclick=function(){
   var v=parseFloat(String(inp.value).replace(",","."));if(isNaN(v)||v<0){inp.focus();return}
@@ -87,6 +88,7 @@ function detail(id){
   save();home();
  };
 }
+function getSet(g){return(S.set&&S.set[g.id]!==undefined)?S.set[g.id]:g.set}
 function fmt(d){var m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(d);return m?m[3]+"."+m[2]+"."+m[1].slice(2):d}
 function norm(s){for(var k in s.hist){(s.hist[k]||[]).forEach(function(e){var m=/^(\d\d)\.(\d\d)\.(\d\d)$/.exec(e.d);if(m)e.d="20"+m[3]+"-"+m[2]+"-"+m[1]})}}
 function chart(a,big){
