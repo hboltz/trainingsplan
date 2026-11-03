@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Trainingsplan</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Training">
 <style>
@@ -24,15 +24,15 @@ h1{font-size:22px;margin:4px 0 2px}
 .link{display:block;margin:22px auto 0;background:none;border:0;color:var(--muted);font:inherit;text-decoration:underline;padding:10px}
 .back{background:none;border:0;color:var(--accent);font:inherit;font-size:18px;padding:6px 0 10px}
 .name{font-size:56px;font-weight:700;margin:0;line-height:1}
-.set{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0;font-size:20px}
+.set{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;font-size:30px;font-weight:600;line-height:1.25}
 .set small{display:block;color:var(--muted);font-size:13px;margin-bottom:2px}
 .wrap{text-align:center;margin:18px 0 8px}
-.wrap input{width:200px;font:700 64px/1.1 inherit;font-family:inherit;text-align:center;background:var(--card);color:var(--text);border:2px solid var(--line);border-radius:16px;padding:8px 0}
+.wrap input{width:100%;font-family:inherit;font-weight:700;font-size:96px;line-height:1.1;text-align:center;background:var(--card);color:var(--text);border:2px solid var(--line);border-radius:16px;padding:10px 0}
 .wrap .kg{color:var(--muted);margin-top:4px}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
-.steps button{font:600 20px inherit;font-family:inherit;padding:14px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text)}
-.ok{width:100%;font:700 20px inherit;font-family:inherit;padding:18px;border:0;border-radius:14px;background:var(--ok);color:#fff;margin-top:6px}
-.hist{margin-top:18px;color:var(--muted);font-size:14px}.set input{width:100%;font:inherit;font-size:20px;background:transparent;color:var(--text);border:0;border-bottom:1px dashed var(--line);padding:2px 0;outline:none;border-radius:0}
+.steps button{font-family:inherit;font-weight:600;font-size:26px;padding:18px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.ok{width:100%;font-family:inherit;font-weight:700;font-size:24px;padding:20px;border:0;border-radius:14px;background:var(--ok);color:#fff;margin-top:6px}
+.hist{margin-top:18px;color:var(--muted);font-size:14px}.set input{width:100%;font-family:inherit;font-size:30px;font-weight:600;background:transparent;color:var(--text);border:0;border-bottom:2px solid var(--accent);padding:2px 0;outline:none;border-radius:0}.chg{background:none;border:0;color:var(--accent);font-family:inherit;font-size:17px;padding:10px 0 0}
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 18px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}.card b{display:block;font-size:24px}.card span{color:var(--muted);font-size:12px}h2{font-size:17px;margin:20px 0 8px}.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}.row .top{display:flex;justify-content:space-between;gap:8px}.row .top span{color:var(--muted)}.dates{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
 </style>
 </head>
@@ -71,7 +71,7 @@ function home(){
 function detail(id){
  cur=id;var g=GERAETE.filter(function(x){return x.id===id})[0],hist=(S.hist[id]||[]).slice(-5).reverse();
  var h='<button class="back" id="back">‹ Übersicht</button><p class="name">'+g.id+'</p>'
- +'<div class="set"><small>Einstellung (antippen zum Ändern)</small><input id="es" type="text" value="'+esc(getSet(g)).replace(/"/g,"&quot;")+'"></div>'
+ +'<div class="set"><small>Einstellung</small><div id="est">'+esc(getSet(g))+'</div><button class="chg" id="chg">Ändern</button></div>'
  +'<div class="wrap"><input id="w" type="number" inputmode="decimal" step="any" value="'+S.w[id]+'"><div class="kg">kg</div></div>'
  +'<div class="steps"><button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="1">+1</button><button data-d="5">+5</button></div>'
  +'<button class="ok" id="ok">Bestätigen</button>';
@@ -79,7 +79,9 @@ function detail(id){
  document.getElementById("app").innerHTML=h;window.scrollTo(0,0);
  var inp=document.getElementById("w");
  document.querySelectorAll(".steps button").forEach(function(b){b.onclick=function(){var v=parseFloat(String(inp.value).replace(",","."))||0;inp.value=Math.max(0,Math.round((v+Number(b.dataset.d))*10)/10)}});
- document.getElementById("es").oninput=function(){S.set=S.set||{};S.set[id]=this.value;save()};
+ inp.onfocus=function(){this.select()};
+ var box=document.getElementById("est"),cb=document.getElementById("chg"),ed=false;
+ cb.onclick=function(){if(!ed){ed=true;box.innerHTML='<input id="es" type="text">';var i=document.getElementById("es");i.value=getSet(g);i.focus();cb.textContent="Fertig"}else{var v=document.getElementById("es").value;S.set=S.set||{};S.set[id]=v;save();box.textContent=v;ed=false;cb.textContent="Ändern"}};
  document.getElementById("back").onclick=home;
  document.getElementById("ok").onclick=function(){
   var v=parseFloat(String(inp.value).replace(",","."));if(isNaN(v)||v<0){inp.focus();return}
@@ -116,6 +118,7 @@ function stats(){
   ds.slice().reverse().forEach(function(d){h+='<div class="row"><div class="top"><b>'+new Date(d).toLocaleDateString('de-DE',{weekday:'short'})+', '+fmt(d)+'</b><span>'+days[d]+' von '+GERAETE.length+' Geräten</span></div></div>'})}
  document.getElementById("app").innerHTML=h;window.scrollTo(0,0);
  document.getElementById("back").onclick=home}
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 S=load();home();
 </script>
 </body>
