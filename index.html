@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Trainingsplan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Training">
+<style>
+:root{--bg:#f2f3f5;--card:#fff;--text:#16181d;--muted:#6b7280;--line:#d9dce1;--accent:#c62828;--ok:#2e9d4f;--okt:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--card:#1c1f26;--text:#f1f2f4;--muted:#9aa1ad;--line:#2d313a;--accent:#ef5350;--ok:#2e9d4f}}
+:root[data-theme="dark"]{--bg:#111317;--card:#1c1f26;--text:#f1f2f4;--muted:#9aa1ad;--line:#2d313a;--accent:#ef5350;--ok:#2e9d4f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--muted);margin-bottom:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{border:2px solid var(--line);background:var(--card);color:var(--text);border-radius:16px;padding:18px 8px;min-height:104px;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.tile b{font-size:30px}.tile span{color:var(--muted);font-size:14px}
+.tile.done{background:var(--ok);border-color:var(--ok);color:var(--okt)}.tile.done span{color:#e6f6ea}
+.banner{background:var(--ok);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:600;margin-bottom:14px}
+.link{display:block;margin:22px auto 0;background:none;border:0;color:var(--muted);font:inherit;text-decoration:underline;padding:10px}
+.back{background:none;border:0;color:var(--accent);font:inherit;font-size:18px;padding:6px 0 10px}
+.name{font-size:56px;font-weight:700;margin:0;line-height:1}
+.set{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0;font-size:20px}
+.set small{display:block;color:var(--muted);font-size:13px;margin-bottom:2px}
+.wrap{text-align:center;margin:18px 0 8px}
+.wrap input{width:200px;font:700 64px/1.1 inherit;font-family:inherit;text-align:center;background:var(--card);color:var(--text);border:2px solid var(--line);border-radius:16px;padding:8px 0}
+.wrap .kg{color:var(--muted);margin-top:4px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.steps button{font:600 20px inherit;font-family:inherit;padding:14px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.ok{width:100%;font:700 20px inherit;font-family:inherit;padding:18px;border:0;border-radius:14px;background:var(--ok);color:#fff;margin-top:6px}
+.hist{margin-top:18px;color:var(--muted);font-size:14px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 18px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}.card b{display:block;font-size:24px}.card span{color:var(--muted);font-size:12px}h2{font-size:17px;margin:20px 0 8px}.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}.row .top{display:flex;justify-content:space-between;gap:8px}.row .top span{color:var(--muted)}.dates{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+var GERAETE=[
+{id:"B3",set:"4 | 2 | 21",w:190},
+{id:"R3",set:"2",w:190},
+{id:"R4",set:"6",w:130},
+{id:"T1",set:"Knie 7 · Fuß 12",w:50},
+{id:"T2",set:"–",w:70},
+{id:"T3",set:"Knie 12 · Fuß M",w:130},
+{id:"Br7",set:"Sitz 3 · Griff 2",w:200},
+{id:"S3",set:"Sitz 4",w:120},
+{id:"B2",set:"11",w:130},
+{id:"B1",set:"11",w:130}];
+var KEY="trainingsplan_v1",S=null,cur=null;
+function fresh(){var s={w:{},done:{},hist:{}};GERAETE.forEach(function(g){s.w[g.id]=g.w});return s}
+function load(){try{var r=localStorage.getItem(KEY);if(r){var s=JSON.parse(r);if(s&&s.w){norm(s);return s}}}catch(e){}return fresh()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function today(){var n=new Date();return n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2)+"-"+("0"+n.getDate()).slice(-2)}
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function home(){
+ cur=null;var n=GERAETE.filter(function(g){return S.done[g.id]}).length,all=n===GERAETE.length;
+ var h='<h1>Training</h1><div class="sub">'+n+' von '+GERAETE.length+' erledigt · 1 Satz à 15 · Tempo 4-2-4</div>';
+ if(all)h+='<div class="banner">Training abgeschlossen ✓</div>';
+ h+='<div class="grid">';
+ GERAETE.forEach(function(g){h+='<button class="tile'+(S.done[g.id]?' done':'')+'" data-id="'+g.id+'"><b>'+g.id+'</b><span>'+S.w[g.id]+' kg</span></button>'});
+ h+='</div><button class="link" id="stats">Auswertung</button><button class="link" id="reset">Neues Training starten</button>';
+ document.getElementById("app").innerHTML=h;
+ document.querySelectorAll(".tile").forEach(function(b){b.onclick=function(){detail(b.dataset.id)}});
+ document.getElementById("stats").onclick=stats;
+ document.getElementById("reset").onclick=function(){if(confirm("Alle Geräte zurücksetzen und neues Training starten?")){S.done={};save();home()}};
+}
+function detail(id){
+ cur=id;var g=GERAETE.filter(function(x){return x.id===id})[0],hist=(S.hist[id]||[]).slice(-5).reverse();
+ var h='<button class="back" id="back">‹ Übersicht</button><p class="name">'+g.id+'</p>'
+ +'<div class="set"><small>Einstellung</small>'+esc(g.set)+'</div>'
+ +'<div class="wrap"><input id="w" type="number" inputmode="decimal" step="any" value="'+S.w[id]+'"><div class="kg">kg</div></div>'
+ +'<div class="steps"><button data-d="-5">−5</button><button data-d="-1">−1</button><button data-d="1">+1</button><button data-d="5">+5</button></div>'
+ +'<button class="ok" id="ok">Bestätigen</button>';
+ h+='<h2>Gewichtsverlauf</h2>'+chart(S.hist[id]||[],true);if(hist.length)h+='<div class="hist">'+hist.map(function(e){return fmt(e.d)+' · '+e.w+' kg'}).join('<br>')+'</div>';
+ document.getElementById("app").innerHTML=h;window.scrollTo(0,0);
+ var inp=document.getElementById("w");
+ document.querySelectorAll(".steps button").forEach(function(b){b.onclick=function(){var v=parseFloat(String(inp.value).replace(",","."))||0;inp.value=Math.max(0,Math.round((v+Number(b.dataset.d))*10)/10)}});
+ document.getElementById("back").onclick=home;
+ document.getElementById("ok").onclick=function(){
+  var v=parseFloat(String(inp.value).replace(",","."));if(isNaN(v)||v<0){inp.focus();return}
+  S.w[id]=v;S.done[id]=true;var a=S.hist[id]=S.hist[id]||[],d=today();
+  if(a.length&&a[a.length-1].d===d)a[a.length-1].w=v;else a.push({d:d,w:v});
+  save();home();
+ };
+}
+function fmt(d){var m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(d);return m?m[3]+"."+m[2]+"."+m[1].slice(2):d}
+function norm(s){for(var k in s.hist){(s.hist[k]||[]).forEach(function(e){var m=/^(\d\d)\.(\d\d)\.(\d\d)$/.exec(e.d);if(m)e.d="20"+m[3]+"-"+m[2]+"-"+m[1]})}}
+function chart(a,big){
+ if(a.length<2)return big?'<div class="hist">Diagramm ab 2 Einträgen</div>':'<div class="hist">–</div>';
+ var W=300,H=big?130:36,p=big?24:3,ws=a.map(function(e){return e.w}),lo=Math.min.apply(null,ws),hi=Math.max.apply(null,ws),mn=lo,mx=hi;
+ if(mn===mx){mn-=1;mx+=1}
+ var xy=a.map(function(e,i){return [p+i*(W-2*p)/(a.length-1),H-p-(e.w-mn)/(mx-mn)*(H-2*p)]});
+ var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block"><polyline points="'+xy.map(function(q){return q[0].toFixed(1)+','+q[1].toFixed(1)}).join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>';
+ if(big){xy.forEach(function(q){s+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="3.5" fill="var(--accent)"/>'});
+  s+='<text x="0" y="12" font-size="11" fill="var(--muted)">'+hi+'</text><text x="0" y="'+(H-3)+'" font-size="11" fill="var(--muted)">'+lo+'</text>'}
+ s+='</svg>';
+ if(big)s+='<div class="dates"><span>'+fmt(a[0].d)+'</span><span>'+fmt(a[a.length-1].d)+'</span></div>';
+ return s}
+function stats(){
+ cur=null;var days={};
+ GERAETE.forEach(function(g){(S.hist[g.id]||[]).forEach(function(e){days[e.d]=(days[e.d]||0)+1})});
+ var ds=Object.keys(days).sort(),n=ds.length,h='<button class="back" id="back">‹ Übersicht</button><h1>Auswertung</h1>';
+ if(!n){h+='<div class="sub">Noch keine Trainings gespeichert.</div>'}
+ else{var wk=Math.max(1,Math.ceil(((new Date(ds[n-1])-new Date(ds[0]))/864e5+1)/7));
+  h+='<div class="cards"><div class="card"><b>'+n+'</b><span>Trainingstage</span></div><div class="card"><b>'+(n/wk).toFixed(1).replace('.',',')+'</b><span>Ø pro Woche</span></div><div class="card"><b>'+fmt(ds[n-1])+'</b><span>zuletzt</span></div></div>';
+  h+='<h2>Gewichte je Gerät</h2>';
+  GERAETE.forEach(function(g){var a=S.hist[g.id]||[];if(!a.length)return;var d=a[a.length-1].w-a[0].w;
+   h+='<div class="row"><div class="top"><b>'+g.id+'</b><span>'+a[0].w+' → '+a[a.length-1].w+' kg ('+(d>0?'+':'')+d+')</span></div>'+chart(a,false)+'</div>'});
+  h+='<h2>Trainingstage</h2>';
+  ds.slice().reverse().forEach(function(d){h+='<div class="row"><div class="top"><b>'+new Date(d).toLocaleDateString('de-DE',{weekday:'short'})+', '+fmt(d)+'</b><span>'+days[d]+' von '+GERAETE.length+' Geräten</span></div></div>'})}
+ document.getElementById("app").innerHTML=h;window.scrollTo(0,0);
+ document.getElementById("back").onclick=home}
+S=load();home();
+</script>
+</body>
+</html>
