@@ -86,7 +86,7 @@ function welcome(msg){
 
 function training(){
  const D=S.devs,n=D.filter(d=>S.done[d.k]).length,old=n>0&&S.start&&S.start!==today();
- render(`<button class="back" id="back">‹ Start</button><h1>Training</h1><div class="sub">${n} von ${D.length} erledigt${S.start?" · Start "+fmt(S.start):""} · 1 Satz à 15 · Tempo 4-2-4</div>${old?`<div class="row"><b>Offenes Training vom ${fmt(S.start)}</b><div class="sub">${n} von ${D.length} Geräten erledigt. Fortsetzen oder neu beginnen?</div><div class="acts"><button id="oc">Fortsetzen</button><button id="on">Neu beginnen</button></div></div>`:""}${D.length&&n===D.length&&!old?'<div class="banner">Training abgeschlossen ✓</div>':""}<div class="grid">${D.map(d=>`<button class="tile${S.done[d.k]?" done":""}" data-k="${esc(d.k)}"><b>${esc(d.n)}</b><span>${S.w[d.k]} kg</span></button>`).join("")}</div>${D.length?'<button class="ok" id="fin" style="margin-top:22px">Training abschließen und speichern</button>':'<div class="sub">Noch keine Geräte. Bitte unter Verwaltung anlegen.</div>'}<button class="ghost" id="home2">‹ Zurück zum Start</button>`);
+ render(`<button class="back" id="back">‹ Start</button><h1>Training</h1><div class="sub">${n} von ${D.length} erledigt${S.start?" · Start "+fmt(S.start):""} · 1 Satz à 15 · Tempo 4-2-4</div>${old?`<div class="row"><b>Offenes Training vom ${fmt(S.start)}</b><div class="sub">${n} von ${D.length} Geräten erledigt. Fortsetzen oder neu beginnen?</div><div class="acts"><button id="oc">Fortsetzen</button><button id="on">Neu beginnen</button></div></div>`:""}${D.length&&n===D.length&&!old?'<div class="banner">Training abgeschlossen ✓</div>':""}<div class="grid">${D.map(d=>`<button class="tile${S.done[d.k]?" done":""}" data-k="${esc(d.k)}"><b>${esc(d.n)}</b><span>${S.w[d.k]} lb</span></button>`).join("")}</div>${D.length?'<button class="ok" id="fin" style="margin-top:22px">Training abschließen und speichern</button>':'<div class="sub">Noch keine Geräte. Bitte unter Verwaltung anlegen.</div>'}<button class="ghost" id="home2">‹ Zurück zum Start</button>`);
  $("back").onclick=welcome;$("home2").onclick=welcome;
  document.querySelectorAll(".tile").forEach(b=>b.onclick=()=>detail(b.dataset.k));
  if(old){$("oc").onclick=()=>{S.start=today();save();training()};$("on").onclick=()=>{S.done={};S.start=null;save();training()}}
@@ -95,7 +95,7 @@ function training(){
 
 function detail(k){
  const d=S.devs.find(x=>x.k===k),a=S.hist[k]||[];
- render(`<button class="back" id="back">‹ Übersicht</button><p class="name">${esc(d.n)}</p><div class="set"><small>Einstellung</small>${esc(d.s||"–")}</div><div class="wrap"><input id="w" type="number" inputmode="decimal" step="any" value="${S.w[k]}"><div class="kg">kg</div></div><div class="steps">${[-5,-1,1,5].map(x=>`<button data-d="${x}">${x>0?"+":"−"}${Math.abs(x)}</button>`).join("")}</div><button class="ok" id="ok">Bestätigen</button><h2>Gewichtsverlauf</h2>${chart(a,true)}${a.length?`<div class="hist">${a.slice(-5).reverse().map(e=>fmt(e.d)+" · "+e.w+" kg").join("<br>")}</div>`:""}`);
+ render(`<button class="back" id="back">‹ Übersicht</button><p class="name">${esc(d.n)}</p><div class="set"><small>Einstellung</small>${esc(d.s||"–")}</div><div class="wrap"><input id="w" type="number" inputmode="decimal" step="any" value="${S.w[k]}"><div class="kg">lb</div></div><div class="steps">${[-10,-2,2,10].map(x=>`<button data-d="${x}">${x>0?"+":"−"}${Math.abs(x)}</button>`).join("")}</div><button class="ok" id="ok">Bestätigen</button><h2>Gewichtsverlauf</h2>${chart(a,true)}${a.length?`<div class="hist">${a.slice(-5).reverse().map(e=>fmt(e.d)+" · "+e.w+" lb").join("<br>")}</div>`:""}`);
  const inp=$("w");inp.onfocus=()=>inp.select();
  document.querySelectorAll(".steps button").forEach(b=>b.onclick=()=>{const v=num(inp.value)||0;inp.value=Math.max(0,Math.round((v+Number(b.dataset.d))*10)/10)});
  $("back").onclick=training;
@@ -108,19 +108,27 @@ function stats(){
  const days={};
  S.devs.forEach(g=>(S.hist[g.k]||[]).forEach(e=>{days[e.d]=(days[e.d]||0)+1}));
  const ds=Object.keys(days).sort(),n=ds.length;
- let h='<button class="back" id="back">‹ Start</button><h1>Statistik</h1>';
+ let h='<button class="back" id="back">‹ Start</button><h1>Statistik</h1><button class="ghost" id="past" style="margin-top:4px">+ Training nachtragen</button>';
  if(!n)h+='<div class="sub">Noch keine Trainings gespeichert.</div>';
  else{const wk=Math.max(1,Math.ceil(((new Date(ds[n-1])-new Date(ds[0]))/864e5+1)/7));
   h+=`<div class="cards"><div class="card"><b>${n}</b><span>Trainingstage</span></div><div class="card"><b>${(n/wk).toFixed(1).replace(".",",")}</b><span>Ø pro Woche</span></div><div class="card"><b>${fmt(ds[n-1])}</b><span>zuletzt</span></div></div><h2>Gewichte je Gerät</h2>`;
   S.devs.forEach(g=>{const a=S.hist[g.k]||[];if(!a.length)return;const dd=Math.round((a[a.length-1].w-a[0].w)*10)/10;
-   h+=`<div class="row"><div class="top"><b>${esc(g.n)}</b><span>${a[0].w} → ${a[a.length-1].w} kg (${dd>0?"+":""}${dd})</span></div>${chart(a,false)}</div>`});
+   h+=`<div class="row"><div class="top"><b>${esc(g.n)}</b><span>${a[0].w} → ${a[a.length-1].w} lb (${dd>0?"+":""}${dd})</span></div>${chart(a,false)}</div>`});
   h+="<h2>Trainingstage</h2>";
   ds.slice().reverse().forEach(d=>{h+=`<div class="row"><div class="top"><b>${new Date(d).toLocaleDateString("de-DE",{weekday:"short"})}, ${fmt(d)}</b><span>${days[d]} von ${S.devs.length} Geräten</span></div></div>`})}
- render(h);$("back").onclick=welcome}
+ render(h);$("back").onclick=welcome;$("past").onclick=addPast}
+
+function addPast(){
+ const y=new Date(Date.now()-864e5),dflt=y.getFullYear()+"-"+("0"+(y.getMonth()+1)).slice(-2)+"-"+("0"+y.getDate()).slice(-2);
+ render(`<button class="back" id="back">‹ Statistik</button><h1>Training nachtragen</h1><label>Datum</label><input class="f" id="pd" type="date" value="${dflt}" max="${today()}"><div class="sub" style="margin-top:12px">Gewicht in lb je Gerät. Leer lassen, wenn das Gerät nicht trainiert wurde.</div>${S.devs.map(d=>`<label>${esc(d.n)}</label><input class="f pw" data-k="${esc(d.k)}" type="number" inputmode="decimal" step="any" value="${S.w[d.k]}">`).join("")}<button class="ok" id="sv">Speichern</button>`);
+ $("back").onclick=stats;
+ $("sv").onclick=()=>{const dt=$("pd").value;if(!/^\d{4}-\d\d-\d\d$/.test(dt)){$("pd").focus();return}
+  document.querySelectorAll(".pw").forEach(i=>{const v=num(i.value);if(isNaN(v)||v<0)return;const k=i.dataset.k,a=(S.hist[k]||[]).filter(e=>e.d!==dt);a.push({d:dt,w:v});a.sort((x,y)=>x.d<y.d?-1:1);S.hist[k]=a});
+  save();stats()}}
 
 function manage(){
  const D=S.devs;
- render(`<button class="back" id="back">‹ Start</button><h1>Verwaltung</h1><div class="sub">Geräte, Einstellungen und Gewichte</div>${D.map((d,i)=>`<div class="row"><div class="top"><b>${esc(d.n)}</b><span>${esc(d.s||"–")} · ${S.w[d.k]} kg</span></div><div class="acts"><button data-a="up" data-i="${i}">▲</button><button data-a="dn" data-i="${i}">▼</button><button data-a="ed" data-i="${i}">Bearbeiten</button><button data-a="del" data-i="${i}">Löschen</button></div></div>`).join("")}<button class="ok" id="add">+ Gerät hinzufügen</button>`);
+ render(`<button class="back" id="back">‹ Start</button><h1>Verwaltung</h1><div class="sub">Geräte, Einstellungen und Gewichte</div>${D.map((d,i)=>`<div class="row"><div class="top"><b>${esc(d.n)}</b><span>${esc(d.s||"–")} · ${S.w[d.k]} lb</span></div><div class="acts"><button data-a="up" data-i="${i}">▲</button><button data-a="dn" data-i="${i}">▼</button><button data-a="ed" data-i="${i}">Bearbeiten</button><button data-a="del" data-i="${i}">Löschen</button></div></div>`).join("")}<button class="ok" id="add">+ Gerät hinzufügen</button>`);
  $("back").onclick=welcome;$("add").onclick=()=>editDev(null);
  document.querySelectorAll(".acts button").forEach(b=>{const i=+b.dataset.i,a=b.dataset.a;
   if(a==="del")two(b,()=>{const k=D[i].k;D.splice(i,1);delete S.w[k];delete S.done[k];delete S.hist[k];save();manage()},"Sicher?");
@@ -128,7 +136,7 @@ function manage(){
 
 function editDev(k){
  const d=k?S.devs.find(x=>x.k===k):{n:"",s:""},w=k?S.w[k]:"";
- render(`<button class="back" id="back">‹ Abbrechen</button><h1>${k?"Gerät bearbeiten":"Neues Gerät"}</h1><label>Name</label><input class="f" id="en" value="${esc(d.n)}"><label>Einstellung</label><input class="f" id="es" value="${esc(d.s)}"><label>Gewicht (kg)</label><input class="f" id="ew" type="number" inputmode="decimal" step="any" value="${w}"><button class="ok" id="sv">Speichern</button>`);
+ render(`<button class="back" id="back">‹ Abbrechen</button><h1>${k?"Gerät bearbeiten":"Neues Gerät"}</h1><label>Name</label><input class="f" id="en" value="${esc(d.n)}"><label>Einstellung</label><input class="f" id="es" value="${esc(d.s)}"><label>Gewicht (lb)</label><input class="f" id="ew" type="number" inputmode="decimal" step="any" value="${w}"><button class="ok" id="sv">Speichern</button>`);
  $("back").onclick=manage;
  $("sv").onclick=()=>{const n=$("en").value.trim();if(!n){$("en").focus();return}
   const v=num($("ew").value)||0,s=$("es").value.trim();
